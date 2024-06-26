@@ -8,48 +8,76 @@ const app = express()
 
 app.use(cookieParser())
 app.use(express.json())
+app.use(express.urlencoded({ extended: true })) // Permite parsear los datos desde un formulario
 
-app.get("/",(req, res)=> {
-    res.status(200).send(`<p>Si ingresas por primera vez, dirígete a <strong>'/login'</strong> e identifícate.</p>`)
+app.set('view engine', 'ejs')
+app.set('views', __dirname + '/views')
+
+app.get('/', (req, res) => {
+  res
+    .status(200)
+    .send(
+      `<p>Si ingresas por primera vez, dirígete a <strong>'/login'</strong> e identifícate.</p>`
+    )
 })
 
-app.post("/login", (req, res)=> {
-    const { email, password } = req.body || ''    
-    console.log(email + ' ' + password)
+app.get('/login', (req, res) => {
+  res.render('login')
+})
 
-    if (!email || !password) {
-        res.status(401).json({error: "Usuario no autorizado. Valide sus credenciales."})
+app.post('/login', (req, res) => {
+  const { email, password } = req.body || ''
+  console.log(email + ' ' + password)
+
+  if (!email || !password) {
+    res
+      .status(401)
+      .json({ error: 'Usuario no autorizado. Valide sus credenciales.' })
+  } else {
+    let respuesta = usuarios.find(
+      (usr) => usr.email === email && usr.password === password
+    )
+    if (respuesta) {
+      // Crear la cookie 'cookieLogin' y establecer su valor desde el 'nombre' del usuario identificado
+      res.cookie('cookieLogin', respuesta.nombre)
+      res.status(200).json({ mensaje: `Bienvenid@ ${respuesta.nombre}` })
     } else {
-        let respuesta = usuarios.find((usr)=> usr.email === email)
-            if (respuesta) {
-                //Crear la clave 'cookieLogin' y establecer su valor desde el 'nombre' del usuario identificado
-                
-                //La creación de la cookie debe hacerse antes de la siguiente línea de código.
-                //Cuando se ejecuta res.status(...) y se envía la respuesta al cliente, el endpoint finaliza el procesamiento del código restante.
-                res.status(200).json({mensaje: `Bienvenid@ ${respuesta.nombre}`} )
-            } else {
-                res.status(401).json({error: `No se pudo validar el usuario ingresado ${email} `})
-            }
+      res
+        .status(401)
+        .json({ error: `No se pudo validar el usuario ingresado ${email}` })
     }
+  }
 })
 
 app.get('/contenido-oculto', (req, res) => {
-    //Crear una constante y validar de que existe 'cookieLogin' para así enviarle el contenido oculto
-    
-    if (cookieLogin) {
-        res.status(200).send(contenidoOculto)
-    } else {
-        res.status(401).json({error: "Usuario no autorizado. Valide sus credenciales."})
-    }   
+  const cookieLogin = req.cookies.cookieLogin
+  if (cookieLogin) {
+    res.status(200).send(contenidoOculto)
+  } else {
+    res
+      .status(401)
+      .json({ error: 'Usuario no autorizado. Valide sus credenciales.' })
+  }
 })
 
-app.get('/eliminarcookie', (req, res)=> {
-    res.clearCookie('cookieLogin')
-    if (!res.cookie.cookieLogin) {
-        res.status(200).send('Cookie eliminada.')
-    }
+app.get('/contenido-oculto', (req, res) => {
+  //Crear una constante y validar de que existe 'cookieLogin' para así enviarle el contenido oculto
+  if (cookieLogin) {
+    res.status(200).send(contenidoOculto)
+  } else {
+    res
+      .status(401)
+      .json({ error: 'Usuario no autorizado. Valide sus credenciales.' })
+  }
+})
+
+app.get('/eliminarcookie', (req, res) => {
+  res.clearCookie('cookieLogin')
+  if (!res.cookie.cookieLogin) {
+    res.status(200).send('Cookie eliminada.')
+  }
 })
 
 app.listen(PORT, () => {
-    console.log('Server listening on port:', PORT)
+  console.log(`Server listening on http://localhost:${PORT}`)
 })

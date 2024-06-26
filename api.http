@@ -1,0 +1,14 @@
+### Login request
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+    "email": "cameron@mutiny.com",
+    "password": "pR5&mW3D$"
+}
+
+### Request contenido-oculto (después de iniciar sesión)
+GET http://localhost:3000/contenido-oculto
+
+### Eliminar cookie
+GET http://localhost:3000/eliminarcookie
